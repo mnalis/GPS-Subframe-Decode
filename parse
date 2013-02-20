@@ -1,0 +1,117 @@
+# Script to parse SiRF GPS Binary protocol data to yield 50 bps frames and
+# subframes.
+
+# edit outfile to point to filename
+
+#!/bin/bash
+
+i=0
+echo $1
+if [ -z "$1" ]
+then echo "No filename given. Usage: ./parse filename.bin"; exit;
+fi
+outfile=$1
+
+
+echo $(hexdump -ve '1/1 "%.2x"' $outfile) | sed -n '/a0a2/,/b0b3/p' | sed 's/a0a2/\na0a2/g' | while read line ; do
+   s=`expr substr "$line" 10 1`
+   if [ $s == "8" ]
+   then
+   	i=$(($i+1))
+	line_size=$(expr length $line)
+	payload_size=$(expr $(expr length $line) - 16)
+	payload_size2=`expr substr "$line" 5 4`
+#	echo $payload_size
+	payload=`expr substr "$line" 9 $payload_size`
+	payload_size_dec=`echo $(wcalc -q -p -d 0x$payload_size2)`
+        #echo $payload_size_dec `expr $payload_size / 2`
+#	echo $payload_size_dec
+	echo -e "\r\n"50bps PAYLOAD \#$i:  $payload
+	echo -e 50bps SiRF \#$i:  $line
+	channel=`expr substr "$line" 9 2`
+	echo -e "Channel: "$channel""
+	SV_ID=`expr substr "$line" 11 2`
+	echo -e "SV_ID: "$SV_ID 
+	payload_bin=`echo $(wcalc -q -p -b 0x$payload)`
+	#echo $payload_bin
+	subframe_len=$(($(expr length $payload)-6))
+	subframe=`expr substr "$payload" 7 $subframe_len`
+	echo "Subframe: "$subframe
+	subframe_bin=`echo $(wcalc -q -p -b "0x"$subframe)`
+        echo "Subframe Length: "`expr length $subframe_bin`
+        subframe_pad=`python -c "print '$subframe_bin'.zfill(300)"`
+        mask=111111111111111
+	m=0
+	#q=$(($m-1))
+	checksum=0
+	r=0
+#	NAME=$payload;
+	while [[ $r -lt `expr length $payload` && $(($r*2)) -lt `expr length $payload` ]]; do
+	c=${payload:(2*r):2}     # Get the next two characters, ad infinitum
+	byte_dec=`echo $(wcalc -q -p -d "0x"$c)`
+	checksum=$(($checksum+$byte_dec))
+	r=$(($r+1))
+	done
+#	while [ $(($m-1)) -lt ${#NAME} ]; do byte=`expr substr "$payload" $m 2`; byte_dec=`echo $(wcalc -q -p -d "0x"$byte)`; checksum=$(($checksum + $byte_dec));
+#	m=$(($m*($m+1))); done
+        checksum_anded=$(($checksum&32767));
+	#echo $checksum_anded
+	checksum_hex=0x`echo $(wcalc -q -p -h $checksum_anded)`
+	echo "Checksum: "$checksum_hex
+	chk2=0x`echo $(wcalc -q -p -h 0x$(expr substr "$line" $(($line_size-7)) 4))`
+#	printf "%X" $((16#$))
+	echo "Checksum2: "$chk2
+	if [ "$checksum_hex" == "$chk2" ]
+		then echo "Checksum Match!"
+	else echo "No checksum match."
+	fi
+	word1=`expr substr "$subframe_pad" 1 30`
+	word2=`expr substr "$subframe_pad" 31 30`
+	word3=`expr substr "$subframe_pad" 61 30`
+        word4=`expr substr "$subframe_pad" 91 30`
+	word5=`expr substr "$subframe_pad" 121 30`
+	word6=`expr substr "$subframe_pad" 151 30`
+	word7=`expr substr "$subframe_pad" 181 30`
+	word8=`expr substr "$subframe_pad" 211 30`
+	word9=`expr substr "$subframe_pad" 241 30`
+        word10=`expr substr "$subframe_pad" 271 30`
+        TOW=`expr substr "$word2" 1 17`
+        TLM_bin=`expr substr "$word1" 1 22`
+	HOW_bin=`expr substr "$word2" 1 22`
+	DAT_ID=`expr substr "$word3" 1 2`
+	PAGE_ID=`expr substr "$word3" 3 6`
+	SF_ID=`expr substr "$word2" 20 3`
+        SF_ID_hex=`echo 0x$(wcalc -q -p -h "0b"$SF_ID)`
+	TLM_hex=`echo 0x$(wcalc -q -p -h "0b"$TLM_bin)`
+	TOW_hex=`echo 0x$(wcalc -q -p -h "0b"$TOW)`
+	HOW_hex=`echo 0x$(wcalc -q -p -h "0b"$HOW_bin)`
+	DAT_ID_hex=`echo 0x$(wcalc -q -p -h "0b"$DAT_ID)`
+	PAGE_ID_hex=`echo 0x$(wcalc -q -p -h "0b"$PAGE_ID)`
+	echo "Subframe ID: "$SF_ID_hex
+	if [[ $SF_ID_hex == "0x1" ]]
+		then echo "Satellite Clock and Health Data"
+	fi
+	if [[ $SF_ID_hex == "0x2" || $SF_ID_hex == "0x3" ]]
+		then echo "Satellite Ephemeris Data"
+	fi
+        if [[ $SF_ID_hex == "0x4" || $SF_ID_hex == "0x5" ]]
+        	then echo "Support Data"
+	fi
+	echo "TLM: "$TLM_hex
+	echo "HOW: "$HOW_hex
+	echo "PAGE_SAT_ID: "$PAGE_ID_hex
+	echo "TOW: "$TOW_hex
+	echo "DATA_ID: "$DAT_ID_hex
+	echo "TLM,C,P: "$word1
+	echo "HOW,t,P: "$word2
+	echo "word3: "$word3
+#   else
+#	echo failure
+   fi
+done
+ #  if [[ "$s" == "8" ]]
+  # then
+  # echo success
+ # if [$s == '8']
+ #  	then echo '\n\n' 50bps frame $i:  $line '\n\n'
+  # fi
