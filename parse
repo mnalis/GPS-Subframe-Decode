@@ -39,7 +39,7 @@ echo $(hexdump -ve '1/1 "%.2x"' $outfile) | sed -n '/a0a2/,/b0b3/p' | sed 's/a0a
 	echo "Subframe: "$subframe
 	subframe_bin=`echo $(wcalc -q -p -b "0x"$subframe)`
         echo "Subframe Length: "`expr length $subframe_bin`
-        subframe_pad=`python -c "print '$subframe_bin'.zfill(300)"`
+        subframe_pad=`python -c "print '$subframe_bin'.zfill(320)"`
         mask=111111111111111
 	m=0
 	#q=$(($m-1))
@@ -65,16 +65,16 @@ echo $(hexdump -ve '1/1 "%.2x"' $outfile) | sed -n '/a0a2/,/b0b3/p' | sed 's/a0a
 		then echo "Checksum Match!"
 	else echo "No checksum match."
 	fi
-	word1=`expr substr "$subframe_pad" 1 30`
-	word2=`expr substr "$subframe_pad" 31 30`
-	word3=`expr substr "$subframe_pad" 61 30`
-        word4=`expr substr "$subframe_pad" 91 30`
-	word5=`expr substr "$subframe_pad" 121 30`
-	word6=`expr substr "$subframe_pad" 151 30`
-	word7=`expr substr "$subframe_pad" 181 30`
-	word8=`expr substr "$subframe_pad" 211 30`
-	word9=`expr substr "$subframe_pad" 241 30`
-        word10=`expr substr "$subframe_pad" 271 30`
+	word1=`expr substr "$subframe_pad" 3 30`
+	word2=`expr substr "$subframe_pad" 35 30`
+	word3=`expr substr "$subframe_pad" 67 30`
+        word4=`expr substr "$subframe_pad" 99 30`
+	word5=`expr substr "$subframe_pad" 131 30`
+	word6=`expr substr "$subframe_pad" 163 30`
+	word7=`expr substr "$subframe_pad" 195 30`
+	word8=`expr substr "$subframe_pad" 227 30`
+	word9=`expr substr "$subframe_pad" 259 30`
+        word10=`expr substr "$subframe_pad" 291 30`
         TOW=`expr substr "$word2" 1 17`
         TLM_bin=`expr substr "$word1" 1 22`
 	HOW_bin=`expr substr "$word2" 1 22`
