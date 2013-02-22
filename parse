@@ -93,7 +93,7 @@ echo $(hexdump -ve '1/1 "%.2x"' $outfile) | sed -n '/a0a2/,/b0b3/p' | sed 's/a0a
 	if [[ $SF_ID_hex == "0x1" ]]
 		then echo "Satellite Clock and Health Data"
 		echo "Spacecraft Health bits: "$HEALTH
-		if [[ `expr substr $HEALTH_hex 1 1` == 0 ]]
+		if [[ `expr substr $HEALTH 1 1` == 0 ]]
 			then echo "MSB set to 0: all navigation data is OK."
 		else echo "MSB set to 1: some or all navigation data is bad."
 		fi
