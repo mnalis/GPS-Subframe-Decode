@@ -79,8 +79,10 @@ echo $(hexdump -ve '1/1 "%.2x"' $outfile) | sed -n '/a0a2/,/b0b3/p' | sed 's/a0a
         TLM_bin=`expr substr "$word1" 1 22`
 	HOW_bin=`expr substr "$word2" 1 22`
 	DAT_ID=`expr substr "$word3" 1 2`
-	PAGE_ID=`expr substr "$word3" 3 6`
+	PAGE_ID=`expr substr "$word3" 3 5`
 	SF_ID=`expr substr "$word2" 20 3`
+	HEALTH=`expr substr "$word3" 17 8`
+	HEALTH_hex=`echo 0x$(wcalc -q -p -h "0b"$HEALTH)`
         SF_ID_hex=`echo 0x$(wcalc -q -p -h "0b"$SF_ID)`
 	TLM_hex=`echo 0x$(wcalc -q -p -h "0b"$TLM_bin)`
 	TOW_hex=`echo 0x$(wcalc -q -p -h "0b"$TOW)`
@@ -90,18 +92,40 @@ echo $(hexdump -ve '1/1 "%.2x"' $outfile) | sed -n '/a0a2/,/b0b3/p' | sed 's/a0a
 	echo "Subframe ID: "$SF_ID_hex
 	if [[ $SF_ID_hex == "0x1" ]]
 		then echo "Satellite Clock and Health Data"
+		echo "Spacecraft Health bits: "$HEALTH
+		if [[ `expr substr $HEALTH_hex 1 1` == 0 ]]
+			then echo "MSB set to 0: all navigation data is OK."
+		else echo "MSB set to 1: some or all navigation data is bad."
+		fi
+		if [[ `expr substr $HEALTH 3 5` = "00000" ]]
+		then echo "Health bit pattern all zeros: All Signals OK."
+		fi
+                if [[ `expr substr $HEALTH 3 5` = "11100" ]]
+                then echo "Health=11100: Satellite is Temporarily Out."
+                fi
+                if [[ `expr substr $HEALTH 3 5` = "11101" ]]
+                then echo "Health:11101: Satellite will be temporarily Out."
+                fi
+                if [[ `expr substr $HEALTH 3 5` = "11110" ]]
+                then echo "Health:11110: Spare."
+                fi
+                if [[ `expr substr $HEALTH 3 5` = "11111" ]]
+                then echo "Health:11111: Satellite experiencing Code modulation and/or signal power level transmission problems. Modulated navigation data valid, however user may experience intermittent tracking problems if satellite is acquired."
+                fi
+
 	fi
 	if [[ $SF_ID_hex == "0x2" || $SF_ID_hex == "0x3" ]]
 		then echo "Satellite Ephemeris Data"
 	fi
         if [[ $SF_ID_hex == "0x4" || $SF_ID_hex == "0x5" ]]
         	then echo "Support Data"
+		echo "DATA_ID: "$DAT_ID_hex
+	        echo "PAGE_SAT_ID: "$PAGE_ID_hex
+
 	fi
 	echo "TLM: "$TLM_hex
 	echo "HOW: "$HOW_hex
-	echo "PAGE_SAT_ID: "$PAGE_ID_hex
 	echo "TOW: "$TOW_hex
-	echo "DATA_ID: "$DAT_ID_hex
 	echo "TLM,C,P: "$word1
 	echo "HOW,t,P: "$word2
 	echo "word3: "$word3
