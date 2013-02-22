@@ -97,19 +97,19 @@ echo $(hexdump -ve '1/1 "%.2x"' $outfile) | sed -n '/a0a2/,/b0b3/p' | sed 's/a0a
 			then echo "MSB set to 0: all navigation data is OK."
 		else echo "MSB set to 1: some or all navigation data is bad."
 		fi
-		if [[ `expr substr $HEALTH 3 5` = "00000" ]]
+		if [[ `expr substr $HEALTH 3 5` == "00000" ]]
 		then echo "Health bit pattern all zeros: All Signals OK."
 		fi
-                if [[ `expr substr $HEALTH 3 5` = "11100" ]]
+                if [[ `expr substr $HEALTH 3 5` == "11100" ]]
                 then echo "Health=11100: Satellite is Temporarily Out."
                 fi
-                if [[ `expr substr $HEALTH 3 5` = "11101" ]]
+                if [[ `expr substr $HEALTH 3 5` == "11101" ]]
                 then echo "Health:11101: Satellite will be temporarily Out."
                 fi
-                if [[ `expr substr $HEALTH 3 5` = "11110" ]]
+                if [[ `expr substr $HEALTH 3 5` == "11110" ]]
                 then echo "Health:11110: Spare."
                 fi
-                if [[ `expr substr $HEALTH 3 5` = "11111" ]]
+                if [[ `expr substr $HEALTH 3 5` == "11111" ]]
                 then echo "Health:11111: Satellite experiencing Code modulation and/or signal power level transmission problems. Modulated navigation data valid, however user may experience intermittent tracking problems if satellite is acquired."
                 fi
 
