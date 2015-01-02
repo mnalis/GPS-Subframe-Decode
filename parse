@@ -28,12 +28,12 @@ echo $(hexdump -ve '1/1 "%.2x"' $outfile) | sed -n '/a0a2/,/b0b3/p' | sed 's/a0a
 #	echo $payload_size_dec
 	echo -e "\r\n"50bps PAYLOAD \#$i:  $payload
 	echo -e 50bps SiRF \#$i:  $line
-	channel=`expr substr "$line" 9 2`
+	channel=`expr substr "$payload" 3 2`
 	echo -e "Channel: "$channel""
-	SV_ID=`expr substr "$line" 11 2`
+	SV_ID=`expr substr "$payload" 5 2`
 	echo -e "SV_ID: "$SV_ID 
 	payload_bin=`echo $(wcalc -q -p -b 0x$payload)`
-	#echo $payload_bin
+	#echo payload_bin: $payload_bin
 	subframe_len=$(($(expr length $payload)-6))
 	subframe=`expr substr "$payload" 7 $subframe_len`
 	echo "Subframe: "$subframe
