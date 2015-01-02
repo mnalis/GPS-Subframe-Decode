@@ -15,7 +15,7 @@ outfile=$1
 
 echo $(hexdump -ve '1/1 "%.2x"' $outfile) | sed -n '/a0a2/,/b0b3/p' | sed 's/a0a2/\na0a2/g' | while read line ; do
    s=`expr substr "$line" 9 2`
-   if [ "$s" == "8" ]
+   if [ "$s" == "08" ]
    then
    	i=$(($i+1))
 	line_size=$(expr length $line)
